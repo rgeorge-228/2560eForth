@@ -1,8 +1,9 @@
 
 Port of 328eForth to Mega 2560 with floating point and minimal file system 
-2560eForth
-A Port of C. H. Ting 328eForth
-R. D. George November 2026
+
+			2560eForth
+	A Port of C. H. Ting 328eForth
+	R. D. George November 2026
 
 INTRODUCTION:
 
