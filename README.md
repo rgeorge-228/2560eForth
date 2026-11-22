@@ -37,7 +37,7 @@ The basic hardware requirements are:
 6)	USB cables B to A				- $5 Amazon
 
 Figure 1 below is a example system with a computer running TeraTerm 5 and connected to the SainSmart 2560 board via USB with the AVR ISP programmer via USB plugged into the 2560 ISP header. Programming the 2560 from the Microchip Studio assembler Hex file will erase all the 2560’s flash, so any Forth words or disk files will be erased. In fact you must run the Format command after a new Hex file is loaded unless that file was saved with an image that has the file structure included
- 
+<img width="967" height="975" alt="image" src="https://github.com/user-attachments/assets/67d39f43-6523-4477-9940-6fc05790052d" />
 Figure 1
 
 MINIMUAL FILE SYSTEM (MFS):
@@ -77,18 +77,18 @@ INSTALLING TEST SYSTEM:
 
 I will illustrate installing the assembly test code and the Forth MFS code on an Atmega 2560 board with a laptop computer and software. The assembly file “FileTest7.txt” is copied to the Microchip Studio 7 New Project screen and gets the name “main.asm”. Select Build Solution from the drop down as in Figure 2.
 
- 
+<img width="975" height="471" alt="image" src="https://github.com/user-attachments/assets/1809bbdb-c8a0-4679-9ba0-7d7b4168491e" />
 Figure 2
 Fix any assemble errors then ReBuild the main.asm code. When there are no errors, you can browse the filename.lss file to see the work of the assembler.
 
 Next click the little icon of an IC chip with a lighting bolt to bring up the programming dialog screen and change the Tool to the AVR ISP programmer Figure 3.
 
- 
+<img width="975" height="568" alt="image" src="https://github.com/user-attachments/assets/c173fa1d-36fc-4c25-b84c-47a1275d78ae" />
 Figure 3
 
 Click the “Apply” then “Read” then “Memories” buttons to see Figure 4 below.
 
- 
+<img width="975" height="566" alt="image" src="https://github.com/user-attachments/assets/02cb5c43-3580-4c17-b5a4-fa6ce9cf4b6c" />
 Figure 4
 
 If it appears that the binary Hex file is correct, click “Program” and you should see:
@@ -98,20 +98,21 @@ Verifying Flash...OK
 
 Open the Tera Term terminal emulator program and check the Com Port from Windows Device Manager and set up the serial port as in Figure 5.
 
- 
+<img width="975" height="984" alt="image" src="https://github.com/user-attachments/assets/e138f3f7-2887-4d7b-bbb9-d10c8217bacc" />
 Figure 5
 
 Be sure to set a line delay to at least 600 ms to allow for 2560eForth to process incoming text lines from the terminal.
 
  
 
- 
+<img width="975" height="602" alt="image" src="https://github.com/user-attachments/assets/8429da39-c5f7-499e-8cb1-c11d462d08ad" />
+ <img width="975" height="570" alt="image" src="https://github.com/user-attachments/assets/eb6ef87e-9191-4123-a226-76d2da80a31a" />
 Figure 6
 Figure 6 is the data for programming the 2560 flash (Fuses & Lock bits).
 
 Once the Tera Term program connects to the 2560 board use the Words command to get something like Figure 7
 
- 
+<img width="975" height="521" alt="image" src="https://github.com/user-attachments/assets/8402c9d7-aa54-47f5-9d47-344d343a8b12" />
 Figure 7
 
 The floating point words and the assembly part of the MFS are now loaded on the 2560. The next step is to copy the test file MFSforth3.txt to the Tera Term program as Figure 8.
@@ -120,7 +121,7 @@ After the load completes, try OK1 word. As you can see, I forgot the Format comm
 
  
 
- 
+<img width="975" height="662" alt="image" src="https://github.com/user-attachments/assets/a72021e1-7638-4f54-ad9e-efb407a1a781" />
 Figure 8
 
 Once all the code is loaded you has a complete Beta Test System. I say Beta with a grain of salt. I have partially tested all new words and have tried a FFT word with CW data form my Ham radio. At this point we have:
