@@ -1,0 +1,136 @@
+\ Test of FFT code	October 30 2026
+\ Use FFT DataFile.dat -- comma seperated data file X,Y to 256 lines
+\
+Hex
+Marker chopfft
+100 Constant Pts
+Variable XR  3FE Allot			\ 256 floats
+Variable XI  3FE Allot
+Variable WR  1FE Allot			\ twiddles, 128 floats
+Variable WI  1FE Allot
+Variable Wc 2 Allot  Variable Ws 2 Allot
+Variable Tr 2 Allot  Variable Ti 2 Allot  Variable Tf 2 Allot
+Variable Cbuf 1E Allot
+Variable Mn 2 Allot
+0.9996988 FCON Cw			\ cos(2 pi/256)
+0.0245412 FCON Sw			\ sin(2 pi/256)
+00 value Np  00 value Lg  00 value Ns
+00 value Half  00 value Strd  00 value St  00 value Kk
+00 value Ix  00 value Jx  00 value Pa  00 value Pb
+00 value Lend  00 value Fs
+: FNEG	( fp -- -fp )	Swap 8000 Xor Swap ;
+: El	( base i -- a )	2* 2* + ;
+: Fx	( a b -- )			\ swap the floats at a and b
+  to Pb to Pa  Pa F@ Tf F!  Pb F@ Pa F!  Tf F@ Pb F! ;
+: WStep	( k -- )			\ W[k] = W[k-1] * W1
+  >R
+  WR R@ 1- El F@ Cw F*  WI R@ 1- El F@ Sw FNEG F*  F-
+  WR R@ El F!
+  WR R@ 1- El F@ Sw FNEG F*  WI R@ 1- El F@ Cw F*  F+
+  WI R> El F! ;
+: MkTw	( -- )
+  1 I2F WR F!  0 0 WI F!
+  7E For 7F R@ - WStep Next ;
+: Rev	( i -- j )			\ reverse the low Lg bits
+  0 Swap
+  Lg 1- For
+    Dup 1 And Rot 2* Or Swap 2/
+  Next
+  Drop ;
+: BitRev ( -- )
+  Np 1- For
+    Np 1- R@ - to Ix  Ix Rev to Jx
+    Jx Ix > If
+      XR Ix El XR Jx El Fx  XI Ix El XI Jx El Fx
+    Then
+  Next ;
+: Bfly	( -- )				\ butterfly at Ix, Jx, twiddle Wc/Ws
+  Wc F@ XR Jx El F@ F*  Ws F@ XI Jx El F@ F*  F-  Tr F!
+  Wc F@ XI Jx El F@ F*  Ws F@ XR Jx El F@ F*  F+  Ti F!
+  XR Ix El F@ Tr F@ F-  XR Jx El F!
+  XI Ix El F@ Ti F@ F-  XI Jx El F!
+  XR Ix El F@ Tr F@ F+  XR Ix El F!
+  XI Ix El F@ Ti F@ F+  XI Ix El F! ;
+: Stage	( -- )
+  Half 1- For
+    Half 1- R@ - to Kk
+    WR Kk Strd * El F@ Wc F!
+    WI Kk Strd * El F@ Ws F!
+    Kk to St
+    Begin
+      St to Ix  St Half + to Jx  Bfly
+      St Half 2* + to St
+      St Np < Invert
+    Until
+  Next ;
+: Xform	( -- )
+  BitRev  1 to Half
+  Begin
+    80 Half / to Strd  Stage
+    Half 2* to Half  Half Np < Invert
+  Until ;
+: LastFld ( cnt -- a n )		\ text after the last comma, CR dropped
+  1- Dup to Lend to Fs
+  Begin
+    Fs 0 > If Fs 1- Pad + c@ 2C = Invert Else 0 Then
+  While
+    Fs 1- to Fs
+  Repeat
+  Pad Fs +  Lend Fs - ;
+: Num?	( a n -- a n flag )		\ starts like a number?
+  Over c@ Dup 2D = Over 2E = Or Swap 30 3A Within Or
+  Over 0 > And ;
+: Val	( a n -- fp )
+  1F Min Dup Rot Swap Cbuf Swap Cmove	\ ( n )
+  0 Swap Cbuf + c!			\ NUL right after the text
+  Cbuf A2F ;
+: Load	( -- n )			\ needs the directory sector in BufOne??
+  OpnIn  0 to Ns
+  XR 400 0 Fill  XI 400 0 Fill
+  Begin
+    FLine Dup
+  While
+    LastFld Num?
+    If
+      Ns Pts < If Val XR Ns El F!  Ns 1+ to Ns Else Drop Drop Then
+    Else Drop Drop Then
+  Repeat
+  Drop Ns ;
+: Size	( n -- )			\ Np = power of 2 >= n
+  1 to Np  0 to Lg
+  Begin
+    Np Over <  Np Pts < And
+  While
+    Np 2* to Np  Lg 1+ to Lg
+  Repeat
+  Drop ;
+: Pwr	( i -- fp )			\ re*re + im*im
+  >R  XR R@ El F@ 2DUP F*  XI R> El F@ 2DUP F*  F+ ;
+: .Bin	( i -- )
+  Dup decimal . hex 2 spaces Pwr
+  2DUP Swap 7FFF And Or 0 = If
+    Drop Drop ." 0"
+  Else 0C F2AE Then Cr ;
+: Spec	( -- )
+  Np 2/ 1- For  Np 2/ 1- R@ - .Bin  Next ;
+: DcOff	( -- )			\ subtract the mean of the Ns samples
+  Ns 2 < If Exit Then
+  0 I2F Mn F!
+  Ns 1- For
+    XR Ns 1- R@ - El F@  Mn F@ F+  Mn F!
+  Next
+  Mn F@  Ns I2F F/  Mn F!
+  Ns 1- For
+    XR Ns 1- R@ - El >R  R@ F@  Mn F@ F-  R> F!
+  Next ;
+: Anal	( -- )
+  Load Dup 2 < If
+    Drop Cr ." Need 2 or more samples" Cr Exit
+  Then
+  Size DcOff MkTw Xform Spec ;
+: Fft	( -- )				\ Fft filename
+  0 to i/o.flg  >File
+  i/o.flg 0 = If Exit Then
+  i/o.flg 4D = MFS.num 0 = Invert And If Cr Anal Else Cr 4 Msg Cr Then ;
+Flush
+

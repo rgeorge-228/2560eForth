@@ -1,0 +1,415 @@
+\ *******************************************************************
+\ MFS (Minimual File System)		R D George	August 2026
+\ Using the memory block 1 & 2 of the Atmega 2560 as a file system of
+\ 128K Bytes
+\ Added Changes to reduce size and move Words to assembler 10/20/26
+\ *******************************************************************
+Hex					\ make sure we are in base 16
+\ Save the context stored in RAM memory to Flash so all pointers
+\ will be saved on reboot	2650 R D George 9/2/26
+: SaveState	 ( -- )
+	0000 Erase			\ Erase Flash starting at 0000
+	200 0000 Write			\ Write RAM 200-2FF to Flash
+;
+\ Command added to assembled code	R D george 9/23/26
+\ : Command	( -- cnt )		\ Used in word definations for
+\	0D parse Dup Rot		\ inputing text to PAD
+\	Swap PAD swap Cmove		\ leaves cnt on stack
+\ ;
+\  -------------------------- WFR 2010-10-22 ------------------------
+\ Modified for 328eForth, 23mar11cht
+\ Extend eForth first, 22mar11cht
+: DOES R> LAST @ NAME> 2+ I! ; 
+\ specific for subroutine thread code.  see VALUE and MARKER.
+: VALUE ( n --, interpret ) VARIABLE DP @ 2- ! DOES R> 2* I@ @ ;
+\ compile a pointer in flash, access data in RAM
+: [TO] ( n --, interpret ) ' 4 + I@ ! ; 
+\ change value while interpreting
+: TO ( n --, compile ) R> DUP 1+ 2* I@ 2+ 2* I@ SWAP 2+ >R ! ;
+\ compiled in colon word to change value at run time
+\ marker is easier for 328eForth with only one vocabulary, 23mar11cht
+: Marker ( <new_name> -- )
+    last @ dp @ cp @ context @
+    create -2 cp +! , , , ,
+    does r> 2* dup i@ context !
+	2+ dup i@ cp !
+	2+ dup i@ dp !
+	2+ i@ last ! 
+;
+\ chop-to		\ error here if first time, next cuts back
+\ marker chop-to  	\ create a forget point to chop back to
+\ -------------------------------------------------------------------
+Flush
+\ Marker ChopMFS
+\ ========================= Memory Map 2560 =========================
+\	    SRAM		DESCRIPTION	
+\	0000 - 001F		32 Registers
+\	0020 - 005F		64 I/O Registers
+\	0060 - 01FF		416 External I/O Registers
+\	0200 - 02FF		Start-Up variables Page 256 bytes
+\	0200 - 022F		Start-Up variables actual 48 bytes
+\	0220 - 0227		System Date 8 bytes mmddyyyy
+\	0228 - 022B		Double for file size sum
+\	0240 - nnnn		User SRAM ~6K
+\	0280 - nnnn		Default PAD
+\	1B80 - 1C7F		File Buffer two	(256 bytes)
+\	1C80 - 1D7F		File Buffer one (256 bytes)
+\	1D80 - 1E7F		Fat8 Buffer (256 bytes)
+\	1E80 - 1EFF		Terminal Input Buffer (128 bytes)	
+\	1F00 - 1F7F		Data Stack   (128 bytes)
+\	1F80 - 1FFF		Return Stack (128 bytes)
+\	2000 - 20FF		Flash Buffer 0 (256 bytes)	
+\	2100 - 21FF		Flash Buffer 1 (256 bytes)	
+\	2200			End of SRAM, Start of EXTERNAL SRAM
+\ ===================================================================
+\ -------------------------- Constants ------------------------------
+	1B80 Constant BufTwo	\ second 256 byte Ram buffer
+	1C80 Constant BufOne	\ first 256 byte Ram buffer
+	1D80 Constant BufFat	\ 256 byte Fat8 Ram buffer		
+\ Fat8 256 bytes of Index to Clusters of 2 sectors each 512 Bytes
+\ -------------------------------------------------------------------
+\ [contents]	-------------	Contents of Fat Index (nn,FF,FD,FE)
+\     |     address  --------	Index in Fat 00 - FB
+\     |        |		Sn is stream # 1 or 2
+\     |     Sn.Cls  ---------	Data Cluster #
+\  Sn.Nxt  ------------------	Next address/index in Fat
+\ -------------------------------------------------------------------
+\	FF = EOF (end of file)	FD = Deleted	FE = Bad Cluster
+\ -------------------------------------------------------------------
+\ Create Structure defining words for Flash file I/O
+\ ------------------------------------------------------------------=
+	00 value S1.Cnt		\ Byte count in sector for stream one
+	00 value S2.Cnt		\ Byte count in sector for stream two
+	00 value S1.Num		\ File # for stream one
+	00 value S2.Num		\ File # for stream two
+	00 value S1.Cls		\ Cluster # for stream one
+	00 value S2.Cls		\ Cluster # for stream two
+	00 value i/o.Sec	\ Sector number
+	00 value i/o.Cnt	\ Character count in Data i/o Buffer
+	20 value i/o.flg	\ Flag for I/O operation
+	00 value S1.Sec		\ Sector number for stream one
+	00 value Ln.Page	\ Lines shown since the last pause
+	14 value PgLen		\ Lines per page, 14 hex = 20 decimal
+	00 value Dir.Sec	\ Directory sector of the open file
+	00 value Dir.Ent	\ Number 0-7 of file in directory sector
+	00 value MFS.att	\ Curreent attribute (i.e. -A, -E)
+	00 value MFS.num	\ used by search routines & address calc
+	00 value MFS.cnt	\ used by search routines & address calc
+	00 value Del.Num	\ Deleted file # in directory (later use)
+\ -------------------------------------------------------------------
+\	Main Function in MFS is Xfer - copies ASCII data from 
+\	Stream 1 to Stream 2.
+\	Streams 1 to 7F are File Numbers
+\	Stream 81 is Terminal and 82 is EVAL, may assign others
+\ -------------------------------------------------------------------
+\ Option - check for "-L" after filename.ext input from terminal
+: ?Option	( n -- )		\ n=count form Command input
+	0 to MFS.Att			\ zero att first
+	Pad + Dup Dup 2 - c@ 2D = If	\ minus sign?
+	  1- c@ to MFS.Att		\ yes - save char in Att
+	  2 - Dup 20 swap c!		\ replace with blank
+	  1+ 20 swap c!			\ both characters 
+	Else				\ no
+	  drop drop			\ drop dups
+	Then				\ end If = "-"
+;
+\	
+: ?Mem		( -- )			\ display Flash and Ram avalible
+	1B5F dp @ - FFFF cp @ -		\ get both numbers left
+	decimal cr ." Flash " U.	\ print Flash memory bytes
+	cr ." Ram    " U.		\ print ram memory bytes
+	cr hex				\ back to base 16
+;
+\ 
+\ DateIn Prompt for current date mmddyyyy. Add to SysDate (220-227)
+: >Date		( -- )
+	1 Msg Space Date 8 Type 2 Msg
+	Pad 30 + 8 Expect Cr
+	Span @ Dup 0 = If Drop Exit Then
+	8 = If Pad 30 + Date 8 Cmove Else 6 Msg Cr Then
+;
+\
+\ Fille Input Command, file name the text to input to file
+\ Creates new file if file name not in Directory. Else overwtite
+\ Check for -A option for append to existing plus -E & -P
+: >File		( -- )
+	Pad 10 20 Fill
+	Command				\ file name to PAD
+	Dup 0 = If
+	  Cr 8 spaces 3 Msg Cr
+	  Drop Exit
+	Then
+	?Option				\ check for [-A, -E, -P]
+	LkUp				\ file exists or new file
+;
+: Imove		( fa ra cnt -- )	\ copy cnt bytes, flash to RAM
+	Begin
+	  Dup
+	While
+	  >R Swap Icount Rot Swap Over c! 1+ R> 1-
+	Repeat
+	Drop Drop Drop
+;
+: >FName	( a -- )		\ counted string a is the file name
+	ICount 1F Min Dup >R		\ ( a+1 n )
+	Pad 20 20 Fill
+	Pad Swap Imove
+	R> ?Option			\ handles a trailing -A or -E
+	LkUp
+;
+\ ## Copy engine ##
+\
+: Pause		( -- flag )		\ FFFF = go on, 0 = quit
+	0D Msg
+	Begin ?Key While Drop Repeat	\ discard typeahead
+	Key DF And 51 = Invert		\ Q or q quits
+	Cr
+;
+\ ## Writing to the terminal (stream 2)
+\
+: PutTTY	( cnt -- flag )
+	Dup Pad + 1- c@ 0D = If		\ line ended with CR?
+	  1- Pad Swap Type Cr
+	  MFS.att DF and 50 = If	\ -P given?
+	    Ln.Page 1+ Dup to Ln.Page
+	    PgLen = If
+	      0 to Ln.Page
+	      Pause 0 = If 0 Exit Then
+	    Then
+	  Then
+	Else
+	  Pad Swap Type			\ long line piece, no CR
+	Then
+	FFFF
+;
+\
+: GetTxt	( a -- cnt )		\ one line to a, 0 = Esc pressed
+	0				\ ( a n )
+	Begin
+	  Key				\ ( a n c )
+	  Dup 1B = If  Drop Drop Drop 0 Exit  Then
+	  Dup 0D = If
+	    Drop Over Over + 0D Swap c!	\ store the CR after the text
+	    1+ Swap Drop Cr Exit	\ ( cnt ), count includes the CR
+	  Then
+	  Dup 0A = If
+	    Drop			\ ignore LF
+	  Else
+	    Dup 8 = Over 7F = Or If	\ backspace or delete
+	      Drop Dup If
+	        1- 8 Emit 20 Emit 8 Emit
+	      Then
+	    Else
+	      Dup 20 < If Drop 20 Then	\ tab and others become blanks
+	      Over 4E < If		\ room in the line?
+	        Dup Emit
+	        >R Over Over + R> Swap c! 1+
+	      Else
+	        Drop
+	      Then
+	    Then
+	  Then
+	0 Until
+;
+: GetLine	( -- cnt )
+	S1.Num 81 = If Pad GetTxt Else FLine Then
+;
+: PutEval	( cnt -- flag )
+	Dup #tib !  0 >in !
+	Pad TIB Rot Cmove
+	MFS.att DF and 45 = If
+	  Pad #tib @ 1- Type Eval
+	Else
+	  EvalQ
+	Then
+	FFFF
+;
+\
+: PutLine	( cnt -- flag )
+	S2.Num 81 = If PutTTY Exit Then
+	S2.Num 82 = If PutEval Exit Then
+	PDisk Dup 0 = If Cr 0B Msg Cr Then
+;
+: Xfer		( -- )			\ main transfer code
+	Begin
+	  GetLine Dup 0 = If
+	    Drop FFFF			\ source ended
+	  Else
+	    PutLine 0 =			\ stop if the disk filled
+	  Then
+	Until
+;
+: NewFile	( -- )
+	CNew Dup 0 = If
+	  Drop Cr B Msg Cr 0 to i/o.flg Exit	\ your "Disk full" number
+	Then
+	Cr >Date
+	NewEnt
+;
+: Go		( s2 -- )		\ send the found file to stream s2
+	i/o.flg 4D = MFS.num 0 = Invert And If
+	  OpnIn  to S2.Num  0 to Ln.Page
+	  S2.Num 81 = If Cr Then
+	  Xfer
+	  S2.Num 82 = If  0 #tib !  0 >in !  Else Cr Then
+	Else
+	  Drop Cr 4 Msg Cr
+	Then
+;
+: Fread		( -- )
+	0 to i/o.flg >File  
+	i/o.flg 0 = If Exit Then
+	81 Go
+;
+: Feval		( -- )
+	0 to i/o.flg >File  
+	i/o.flg 0 = If Exit Then
+	82 Go
+;
+: Show		( a -- )
+	0 to i/o.flg >FName
+	i/o.flg 0 = If Exit Then
+	81 Go
+;
+: Run		( a -- )
+	0 to i/o.flg >FName  
+	i/o.flg 0 = If Exit Then
+	82 Go
+;
+\
+\ Your wrapper for file names then becomes:
+\ 
+\ : TST1	( -- )	$" Hello.dat" Show ;
+\ : Lib1	( -- )	$" lib1.f" Run ;
+\
+\ -------------------------------------------------------------------
+\ MFS command summary
+\   Fwrite File [-A]   type text into File. Esc ends the input.
+\                      -A appends. Esc drops a partly typed line.
+\   Fread  File [-P]   list File to the terminal, -P pause every 20 lines
+\   Feval  File [-E]   interpret File as Forth source, no echo and no
+\                      ok. -E echoes each line with its ok.
+\   Fcopy  F1 F2 [-A]  copy F1 to F2, new or overwrite. -A appends.
+\   Fdelete File       delete File and free its clusters
+\   $" Filename.ext"   Show - from compiled word list Filename.ext
+\   $" Filename.f      Run  - form compiled word execuite Filename.f
+\ Notes
+\   Esc is read as a raw key, so ~ and any other text is allowed.
+\   Control characters in typed text are stored as blanks.
+\   Lines hold at most 78 characters, each stored with a CR.
+\   Files may not contain NUL (00), which marks the end of the data.
+\   Do not run Fwrite, Fread, Fdelete or Fcopy inside a file run by
+\   Feval, because they share the stream buffers.
+\ -------------------------------------------------------------------
+: Fwrite	( -- )
+	0 to i/o.flg  0 to Dir.Sec
+	>File
+	i/o.flg 0 = If Exit Then
+	81 to S1.Num
+	i/o.flg 4D = If
+	  Cr >Date
+	  MFS.att DF and 41 = If ApOpn Else ReOpn Then
+	Else
+	  NewFile
+	Then
+	Dir.Sec 0 = If Exit Then	\ open failed, write nothing
+	Xfer
+	CloseF
+	Cr 5 Msg Cr
+;
+\ Fdelete It reuses `>File` for the name lookup.
+\ A successful match leaves i/o.flg at 4D 
+\ the directory sector in i/o.sec and the slot in i/o.cnt
+: Fdelete	( -- )
+	0 to i/o.flg			\ detect the syntax-error exit
+	>File
+	i/o.flg 0 = If Exit Then	\ >File already printed syntax help
+	i/o.flg 4D = MFS.num 0 = Invert And If	\ matched an existing file
+	  DelEnt
+	  Cr A Msg Cr			\ "Deleted"
+	Else
+	  Cr 4 Msg Cr			\ "Not Found"
+	Then
+;
+\
+: GetName	( c a -- )		\ parse a name to a, blank padded
+	Dup 10 20 Fill
+	Swap Parse			\ ( a b u )
+	F Min Rot Swap Cmove
+;
+: Fcopy		( -- )
+	0 to i/o.flg  0 to Dir.Sec
+	20 Pad GetName  20 Pad 20 + GetName
+	Pad c@ 20 =  Pad 20 + c@ 20 =  Or If
+	  Cr 0E Msg Cr Exit		\ syntax message
+	Then
+	0 to MFS.att
+	0D Parse 2 = If Dup c@ 2D = If 1+ c@ to MFS.att 
+	  Else Drop Then Else Drop Then
+	LkUp				\ source name is at Pad
+	i/o.flg 4D =  MFS.num 0 = Invert  And Invert If
+	  Cr 4 Msg Cr Exit		\ Not Found
+	Then
+	OpnIn				\ source goes in BufTwo
+	Pad 20 + Pad 10 Cmove		\ destination name to Pad
+	LkUp
+	i/o.flg 0 = If Exit Then	\ directory full
+	i/o.flg 4D = If
+	  MFS.num S1.Num = If Cr 0F Msg Cr Exit Then	\ onto itself
+	  MFS.att DF and 41 = If ApOpn Else ReOpn Then
+	Else
+	  NewFile
+	Then
+	Dir.Sec 0 = If Exit Then	\ open failed, write nothing
+	Xfer
+	CloseF
+	Cr 5 Msg Cr
+;
+\
+: Frename	( -- )
+	0 to i/o.flg
+	20 Pad GetName  20 Pad 20 + GetName
+	Pad c@ 20 =  Pad 20 + c@ 20 =  Or If
+	  Cr 10 Msg Cr Exit		\ syntax message
+	Then
+	LkUp				\ old name at Pad
+	i/o.flg 4D = MFS.num 0 = Invert And Invert If
+	  Cr 4 Msg Cr Exit		\ Not Found
+	Then
+	i/o.Sec to Dir.Sec  i/o.Cnt to Dir.Ent
+	Pad 20 + Pad 10 Cmove		\ new name to Pad
+	LkUp
+	i/o.flg 4D = If Cr 11 Msg Cr Exit Then	\ new name already used
+	BufOne Dir.Sec SecRead
+	Dir.Ent 5 Lshift BufOne +	\ the old entry
+	Pad Swap F Cmove		\ new 15 byte name
+	BufOne Dir.Sec SecWrite
+	Cr 12 Msg Cr			\ Renamed
+;
+\ Dump All pointers for debug purposes
+: Pdump		( -- )			\ print out pointers
+	cr 6 spaces ." Num" MFS.num . 2 spaces ." Cnt" MFS.cnt . 
+	2 spaces ." Att" MFS.att .
+	cr ." i/o.Sec" i/o.Sec 4 U.R
+	3 spaces
+	." i/o.Cnt" i/o.Cnt 5 U.R 2 spaces
+	." i/o.Flg" i/o.Flg 5 U.R
+	cr ." S1.Cnt" S1.cnt 5 U.R
+	3 spaces
+	." S1.Num" S1.Num 6 U.R 2 spaces
+	." S1.Cls" S1.Cls 6 U.R
+	cr ." S2.Cnt" S2.Cnt 5 U.R
+	3 spaces
+	." S2.Num" S2.Num 6 U.R 2 spaces
+	." S2.Cls" S2.Cls 6 U.R
+	cr ." S1.Sec" S1.Sec 5 U.R
+	3 spaces
+	." Dir.Sec" Dir.Sec 5 U.R 2 spaces
+	." Del.Num" Del.Num 5 U.R Cr
+;
+: OK1	( -- )	$" Hello.dat" Show ;
+Flush
+SaveState
+
+
+
