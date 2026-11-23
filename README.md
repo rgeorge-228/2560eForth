@@ -54,12 +54,13 @@ saved, and loaded with this system.
 SYSTEM REQUIREMENTS: 
 
 The basic hardware requirements are: 
-1) Atmega 2560 board with serial USB 
-2) AVR ISP programmer   - $10 - $15 Chinese suppliers - $25 - $30 Amazon 
+1) Atmega 2560 board with serial USB     - $10 - $15 Chinese suppliers
+2) AVR ISP programmer                    - $25 - $30 Amazon 
 3) Computer to run Microchip Studio and Terminal Emulator 
-4) Microchip Studio 7    - Free download 
-5) Tera Term 5     
-6) USB cables B to A    - Free download - $5 Amazon 
+4) Microchip Studio 7                   - Free download 
+5) Tera Term 5                          - Free download     
+6) USB cables B to A                    - $5 Amazon
+
 Figure 1 below is a example system with a computer running TeraTerm 5 and connected 
 to the SainSmart 2560 board via USB with the AVR ISP programmer via USB plugged 
 into the 2560 ISP header. Programming the 2560 from the Microchip Studio assembler 
