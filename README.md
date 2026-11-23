@@ -111,15 +111,10 @@ example.
 \ Print Pi r^2 for any given value of r
 
 3.14597 FCON Pi                    \ FP constant Pi
-
 : Pir^2      (fp, r -- )           \ print Pi*r^2
-
   2Dup F* Pi F*                    \ double FP r multiply then by Pi
-  
   Cr 9 F2AE Cr                     \ print output on new line 9 chars
-  
 ;
-
 Flush                              \ flush to dictionary
  
 2.0 Pir^2  Cr      will print the value
