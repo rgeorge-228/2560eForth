@@ -108,11 +108,11 @@ F/, F2AE, F2I16, A2F, I2F, F>. Variable and arrays are treated the same as regul
 words with the exception that all FP values take 4 bytes each. Here is a quick math 
 example.
 
-\  Print Pi r^2 for a given r – to the terminal screen 
-3.14597 FCON Pi                      \ constant Pi 
-: Pir^2     ( fp,r – )               \ print Pi r^2
-    2Dup F* Pi F*                    \ double r multiply then by constant Pi
-    Cr 9 F2AE Cr                     \ print ASCII on new line 
+\  Print Pi r^2 for a given r – to the terminal screen. 
+3.14597 FCON Pi                      \ constant Pi. 
+: Pir^2     ( fp,r – )               \ print Pi r^2.
+    2Dup F* Pi F*                    \ double r multiply then by constant Pi.
+    Cr 9 F2AE Cr                     \ print ASCII on new line. 
 ; 
 Flush                                \ flush buffer to flash directory
  
