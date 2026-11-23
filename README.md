@@ -111,15 +111,10 @@ example.
 \  Print Pi r^2 for a given r – to the terminal screen
 
 3.14597 FCON Pi                      \ constant Pi
-
 : Pir^2     ( fp,r – )               \ print Pi r^2
-
     2Dup F* Pi F*                    \ double r multiply then by constant Pi
-    
-    Cr 9 F2AE Cr                     \ print ASCII on new line
-    
-; 
-
+    Cr 9 F2AE Cr                     \ print ASCII on new line  
+;
 Flush                                \ flush buffer to flash directory
  
 2.0 Pir^2        will print the value
