@@ -118,6 +118,13 @@ Flush					\ flush buffer to flash directory
 2.0 Pir^2  will print
 1.258E+01
 
+\ Print Pi r^2 for any given value of r
+3.14597 FCON Pi                    \ FP constant Pi
+: Pir^2      (fp, r -- )           \ print Pi*r^2
+  2Dup F* Pi F*                    \ double FP r multiply then by Pi
+  Cr 9 F2AE Cr                     \ print output on new line 9 chars
+;
+Flush                              \ flush to dictionary
 
 \  Print Pi r^2 for a given r – to the terminal screen
 3.14597 FCON Pi                      \ constant Pi
@@ -127,7 +134,7 @@ Flush					\ flush buffer to flash directory
 ;
 Flush                                \ flush buffer to flash directory
  
-2.0 Pir^2        will print the value
+2.0 Pir^2  Cr      will print the value
 1.258E+01  
 
 Changing the 9 F2AE to C F2AE will give more digits in the output number. 
