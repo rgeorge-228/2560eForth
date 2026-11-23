@@ -16,6 +16,7 @@ Atmega 328P Microcontroller. Adding both to the 328eForth used up over half of t
 Microcontrollers 32K of Flash memory. I had an SainSmart MEGA 2560 board and said, 
 let’s port the assembler code to the larger Microcontroller (256K Flash & 8K SRAM). 
 That was the start of this system. 
+
 PORTING 328eFORTH: 
 
 The biggest issue with the port to the 2560 was the larger memory range (256K vs. 
@@ -41,6 +42,7 @@ than the 32K of the 328P Foth system. All addressing can be limited to 16 bits i
 The highest memory block (Block 3) was set aside for booting the 2560 and assembly 
 code for floating point and file handling code. The Reset Vector was reset to 1F000 and 
 the Interrupt Table added there. 
+
 BOOTLOADER: 
 
 The bootloader for the 2560 is 8K in the block 3 memory. Because we are using that 
@@ -48,6 +50,7 @@ area for our code, the bootloader for the Microcontroller is not available. Ther
 work around for that in a further version. All assembler programming uses a AVR ISP 
 programmer and the Microchip Studio Version 7 IDE. Binary versions can be created, 
 saved, and loaded with this system. 
+
 SYSTEM REQUIREMENTS: 
 
 The basic hardware requirements are: 
@@ -89,6 +92,7 @@ SaveState
 The SaveState command will save all pointers in flash that will be reloaded to SRAM 
 when the 2560 reboots. This guarantees all Forth words are available. 
 The OK1 command should print the Hello.dat file from the disk drive to the terminal. 
+
 FLOATING POINT: 
 
 Thanks to Igor Voytenko for his work in creating AVR assembler code for IEEE 745 
@@ -120,6 +124,7 @@ Flush
 Changing the 9 F2AE to C F2AE will give more digits in the output number. 
 Most of the floating point code is in Hi memory with only “stubs” in the Forth dictionary. 
 This saves lots of space for user words in the dictionary. 
+
 INSTALLING TEST SYSTEM: 
 
 I will illustrate installing the assembly test code and the Forth MFS code on an Atmega 
@@ -220,6 +225,7 @@ does r> 2* dup i@ context !
 I am not sure who WFR is, but I give credit for his utilities. 
 
 OBSERVATIONS: 
+
 The Atmega 2560 board gives the hobbyist more I/O than anyone could want and with a 
 small Forth system it provides an excellent platform for digital project development. I set 
 out to use this system to help restoring an MMD-1 8080 microcomputer system from the 
