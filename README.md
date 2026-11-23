@@ -109,25 +109,16 @@ words with the exception that all FP values take 4 bytes each. Here is a quick m
 example.
 
 \  Print Pi r^2 for a given r – to the terminal screen 
-
-3.14597 FCON Pi 
-
-\ constant Pi 
-
-: Pir^2 
-
+3.14597 FCON Pi                      \ constant Pi 
+: Pir^2     ( fp,r – )               \ print Pi r^2
+    2Dup F* Pi F*                    \ double r multiply then by constant Pi
+    Cr 9 F2AE Cr                     \ print ASCII on new line 
 ; 
+Flush                                \ flush buffer to flash directory
+ 
+2.0 Pir^2        will print the value
+1.258E+01  
 
-( fp,r – )  
-2Dup F* Pi F*  
-Cr 9 F2AE Cr  
-\ print Pi r^2 
-\ double r multiply then by constant Pi 
-\ print ASCII on new line 
-\ flush buffer to flash directory 
-Flush     
-2.0 Pir^2  will print 
-1.258E+01 
 Changing the 9 F2AE to C F2AE will give more digits in the output number. 
 Most of the floating point code is in Hi memory with only “stubs” in the Forth dictionary. 
 This saves lots of space for user words in the dictionary. 
