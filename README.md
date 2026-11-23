@@ -3,6 +3,7 @@
     R. D. George November 2026 
     
 INTRODUCTION: 
+
 I am indebted to C. H. Ting and his colleagues at The Silicon Valley Forth Interest Group 
 (SVFIG) that brought FORTH to Microcontrollers. I started working with the Atmega 
 328P several years ago and found the work of Ting’s 328eForth on the internet. His 
@@ -16,6 +17,7 @@ Microcontrollers 32K of Flash memory. I had an SainSmart MEGA 2560 board and sai
 let’s port the assembler code to the larger Microcontroller (256K Flash & 8K SRAM). 
 That was the start of this system. 
 PORTING 328eFORTH: 
+
 The biggest issue with the port to the 2560 was the larger memory range (256K vs. 
 32K). The 328P uses 16 bit addressing and can only use 32K of that address range. 
 The 2560 uses 18 bit addressing and can use the full 256K range. To accomplish this, 
@@ -40,12 +42,14 @@ The highest memory block (Block 3) was set aside for booting the 2560 and assemb
 code for floating point and file handling code. The Reset Vector was reset to 1F000 and 
 the Interrupt Table added there. 
 BOOTLOADER: 
+
 The bootloader for the 2560 is 8K in the block 3 memory. Because we are using that 
 area for our code, the bootloader for the Microcontroller is not available. There may be a 
 work around for that in a further version. All assembler programming uses a AVR ISP 
 programmer and the Microchip Studio Version 7 IDE. Binary versions can be created, 
 saved, and loaded with this system. 
 SYSTEM REQUIREMENTS: 
+
 The basic hardware requirements are: 
 1) Atmega 2560 board with serial USB 
 2) AVR ISP programmer   - $10 - $15 Chinese suppliers - $25 - $30 Amazon 
@@ -63,6 +67,7 @@ was saved with an image that has the file structure included.
 Figure 1
 
 MINIMAL FILE SYSTEM (MFS): 
+
 To take advantage of the extra flash memory in the 2560 Microcontroller, I created a 
 virtual Disk Drive using two of the 64K memory blocks. The two middle blocks totaling 
 128K were available for use. I thought that 128K is about the size of the original 5 ¼ 
@@ -85,6 +90,7 @@ The SaveState command will save all pointers in flash that will be reloaded to S
 when the 2560 reboots. This guarantees all Forth words are available. 
 The OK1 command should print the Hello.dat file from the disk drive to the terminal. 
 FLOATING POINT: 
+
 Thanks to Igor Voytenko for his work in creating AVR assembler code for IEEE 745 
 floating point operations. His assembly code (GitHub - igor-240340/Float32AVR:) was 
 added to the Hi memory block along with my code changes to interface to the 328eforth 
@@ -115,6 +121,7 @@ Changing the 9 F2AE to C F2AE will give more digits in the output number.
 Most of the floating point code is in Hi memory with only “stubs” in the Forth dictionary. 
 This saves lots of space for user words in the dictionary. 
 INSTALLING TEST SYSTEM: 
+
 I will illustrate installing the assembly test code and the Forth MFS code on an Atmega 
 2560 board with a laptop computer and software. The assembly file “FileTest7.txt” is 
 copied to the Microchip Studio 7 New Project screen and gets the name “main.asm”. 
@@ -182,6 +189,7 @@ So, there are 53K of flash for Forth words and 6.4K of SRAM for variables This i
 of room for developing microprocessor programs.  
 
 ADDITIONAL CODE: 
+
 As part of the development of this 2560eForth I used some utilities to simplify the 
 pointer used in the MFS system. 
 \  -------------------------- WFR 2010-10-22 ------------------------ 
@@ -250,6 +258,7 @@ microcontrollers. Work has been started on documentation of the new Forth words
 added for File access and Floating Point math. 
 Along with this Word document are additional files that I used in the example code in 
 Appendix A. 
+
 Separate files are:  
 
     TestFile7.txt    main.asm 
