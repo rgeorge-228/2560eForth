@@ -120,19 +120,19 @@ I will illustrate installing the assembly test code and the Forth MFS code on an
 copied to the Microchip Studio 7 New Project screen and gets the name “main.asm”. 
 Select Build Solution from the drop down as in Figure 2.
 <img width="975" height="471" alt="image" src="https://github.com/user-attachments/assets/a1c67531-f0a5-4361-95de-9972b2c122aa" />
+Figure 2
 
-Figure 2 
 Fix any assemble errors, then ReBuild the main.asm code. When there are no errors, 
 you can browse the filename.lss file to see the work of the assembler. 
 Next click the little icon of an IC chip with a lighting bolt to bring up the programming 
 dialog screen and change the Tool to the AVR ISP programmer Figure 3. 
 <img width="975" height="568" alt="image" src="https://github.com/user-attachments/assets/a41283be-441a-45ea-8e27-1d4fe632a153" />
-
 Figure 3 
+
 Click the “Apply” then “Read” then “Memories” buttons to see Figure 4 below. 
 <img width="975" height="566" alt="image" src="https://github.com/user-attachments/assets/a3d1f830-f630-4fe5-8725-8e4103136d3b" />
-
 Figure 4 
+
 If it appears that the binary Hex file is correct, click “Program” and you should see: 
 Erasing device... OK 
 Programming Flash...OK 
@@ -140,20 +140,18 @@ Verifying Flash...OK
 Open the Tera Term terminal emulator program and check the Com Port from Windows 
 Device Manager and set up the serial port as in Figure 5. 
 <img width="975" height="984" alt="image" src="https://github.com/user-attachments/assets/a069ab2f-f712-4db1-a3b6-bade38ca768c" />
-
 Figure 5 
+
 Be sure to set a line delay to at least 600 ms to allow for 2560eForth to process 
 incoming text lines from the terminal. 
 <img width="975" height="602" alt="image" src="https://github.com/user-attachments/assets/39503177-f9cd-49dd-b19b-3527e32c2fc8" />
 <img width="975" height="570" alt="image" src="https://github.com/user-attachments/assets/025a74a6-e852-40ff-89a4-759787fc0d73" />
-
 Figure 6 
+
 Figure 6 is the data for programming the 2560 flash (Fuses & Lock bits). 
- 
 Once the Tera Term program connects to the 2560 board, use the Words command to 
 get something like Figure 7 
  <img width="975" height="521" alt="image" src="https://github.com/user-attachments/assets/2889e66d-d41b-4782-86fb-d41627340476" />
-
 Figure 7 
  
 The floating point words and the assembly part of the MFS are now loaded on the 2560. 
@@ -162,8 +160,8 @@ The next step is to copy the test file MFSforth3.txt to the Tera Term program as
 After the load completes, try OK1 word. As you can see, I forgot the Format command. 
  
 <img width="975" height="406" alt="image" src="https://github.com/user-attachments/assets/239fa060-41f4-4611-9a91-26b676a397ad" />
- 
 Figure 8 
+
 Once all the code is loaded, you has a complete Beta Test System. I say Beta with a 
 grain of salt. I have partially tested all new words and have tried a FFT word with CW 
 data from my Ham radio. At this point we have: 
@@ -395,106 +393,68 @@ FFT256.f command again.
 APPENDIX B: New 2560eForth Commands 
  
 Stack Abbreviations of Number Types 
-flag   Boolean, 0 or -1 (false or true) 
-char   ASCII character or 8 bit byte 
-n   a 16 bit number 
-fp   a 4 byte Floating Point number 
-d   a 32 bit number 
-addr   a 16 bit address 
+flag     Boolean, 0 or -1 (false or true) 
+char     ASCII character or 8 bit byte 
+n       a 16 bit number 
+fp      A 4 byte Floating Point number 
+d       a 32 bit number 
+addr    a 16 bit address 
+
  
 Floating Point Operations 
-F! (fp addr -- ) Save fp at addr (4 bytes) 
-F@ (addr – fp) Replace addr with fp at addr (4 bytes) 
-FCON <name> (fp -- ) Defines FP constant, at run time fp 4bytes is 
-left on the stack 
-2SWAP (fp1, fp2 – fp2, fp1) Swap floating point numbers 4 bytes each 
-F+ (fp1, fp2 – fp3) Adds two FP numbers for FP result 
-(fp1, fp2 – fp3) 
-Subtracts fp2 from fp1 for FP result 
-F- 
-F* 
-(fp1, fp2 – fp3) 
-Multiplies fp1 by fp2 for FP result 
-F/ 
-(fp1, fp2 – fp3) 
-Divides fp1 by fp2 for FP result 
-F> 
-(fp1, fp2 – flag) 
-Flag is true (-1) If fp2>fp1 
-F2AE 
-(fp, n -- ) 
-F2I16 
-Prints ASCII string length n as N.NNNE+-NN 
-(fp – n) 
-Truncates fp to Integer n (16 bits) 
-A2F 
-(addr – fp) 
-Converts ASCII at addr to FP 
-I2F 
-(char – fp) 
-Converts char (8 bits) to FP 
+F!           (fp addr -- )     Save fp at addr (4 bytes) 
+F@           (addr – fp)       Replace addr with fp at addr (4 bytes) 
+FCON <name>  (fp -- )          Defines FP constant, at run time fp 4bytes is 
+                               Left on the stack 
+2SWAP        (fp1, fp2 – fp2, fp1)   Swap floating point numbers 4 bytes each 
+F+           (fp1, fp2 – fp3)   Adds two FP numbers for FP result 
+f_           (fp1, fp2 – fp3)   Subtracts fp2 from fp1 for FP result 
+F*           {fp1, fp2 – fp3)   Multiplies fp1 by fp2 for FP result 
+F/           (fp1, fp2 – fp3)   Divides fp1 by fp2 for FP result 
+F>           (fp1, fp2 – flag)  Flag is true (-1) If fp2>fp1 
+F2AE         (fp, n -- )        Prints ASCII string length n as N.NNNE+-NN 
+F2I16        (fp – n)           Truncates fp to Integer n (16 bits) 
+A2F          (addr – fp)        Converts ASCII at addr to FP 
+I2F          (char – fp)        Converts char (8 bits) to FP 
+
+
 File Operations 
-FWRITE 
-<name>|<-A> 
-( -- ) 
-Takes terminal input and stores in <name> 
-with optional -A append  
-FREAD 
-<name>|<-P> 
-( -- ) 
-Outputs to terminal file <name> with optional 
-P for pause 
-FEVAL 
-<name>|<-E> 
-( -- ) 
-Executes (Eval) file with Forth compile or 
-interpret, optional -E echo process 
-FCOPY <file1> 
-<file2>|<-A> 
-( -- ) 
-Copies <file1> to <file2> with optional -A for 
-append <file1> to <file2> 
-FRENAME 
-<file1> <file2> 
-( -- ) 
-Rename <file1> to <file2> just changes names 
-in the directory 
-FDELETE 
-<name> 
-( -- ) 
-Will delete <name> file data from virtual disk 
-drive 
-DIR 
-( -- ) 
-Print a directory of files on the disk drive 
-HELP 
-( -- ) 
-Print a help message of file commands 
+FWRITE        ( -- ) 
+<name>|<-A>                     Takes terminal input and stores in <name> 
+                                with optional -A append  
+FREAD         ( -- ) 
+<name>|<-P>                     Outputs to terminal file <name> with optional 
+                                P for pause 
+FEVAL         ( -- )
+<name>|<-E>                     Executes (Eval) file with Forth compile or 
+                                interpret, optional -E echo process
+FCOPY <file1> ( -- ) 
+<file2>|<-A>                    Copies <file1> to <file2> with optional -A for 
+                                append <file1> to <file2> 
+FRENAME       ( -- ) 
+<file1> <file2>                 Rename <file1> to <file2> just changes names 
+                                in the directory
+FDELETE       ( -- )
+<name>                          Will delete <name> file data from virtual disk 
+                                drive 
+DIR           ( -- )            Print a directory of files on the disk drive 
+
+HELP          ( -- )            Print a help message of file commands 
+
+
 Utilities 
-IDUMP 
-(addr -- ) 
-Dumps 256 bytes from Flash at addr adds the 
-block address to the dump 
-FDUMP 
-(n -- ) 
-Dumps 256 bytes from Flash at sector n 
-RDUMP 
-( -- ) 
-Formatted dump of all 32 registers 
-FORMAT 
-( -- ) 
-Format the virtual disk, used only once 
-?MEM 
-( --  ) 
-Prints Flash and SRAM memory available  
-“S <file>” RUN ( -- ) 
-Compiled <file name> at run time RUN calls 
-FEVAL to execute the code in <file> 
-“S <file>” 
-SHOW 
-( -- ) 
-Compiled <file name> at run time SHOW 
-prints <file> to terminal 
+IDUMP         (addr -- )        Dumps 256 bytes from Flash at addr adds the 
+                                block address to the dump 
+FDUMP          (n -- )          Dumps 256 bytes from Flash at sector n 
+RDUMP          ( -- )           Formatted dump of all 32 registers 
+FORMAT         ( -- )           Format the virtual disk, used only once 
+?MEM           ( -- )           Prints Flash and SRAM memory available  
+“S <file>”     ( -- )   
+RUN                             Compiled <file name> at run time RUN calls 
+                                FEVAL to execute the code in <file> 
+“S <file>”     ( -- ) 
+SHOW                            Compiled <file name> at run time SHOW 
+                                prints <file> to terminal  
+ 
 END:      
-Robert George 
-November 2026 
+                                Robert George   November 2026 
