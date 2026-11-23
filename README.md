@@ -106,12 +106,18 @@ point constants (i.e. 3.14597 FCON PI) and additional Forth words to make it eas
 use floating point numbers in FORTH. Some examples are F@, F!, 2SWAP, F+, F-. F*, 
 F/, F2AE, F2I16, A2F, I2F, F>. Variable and arrays are treated the same as regular Forth 
 words with the exception that all FP values take 4 bytes each. Here is a quick math 
-example 
+example.
+
 \  Print Pi r^2 for a given r – to the terminal screen 
-3.14597 FCON Pi   
+
+3.14597 FCON Pi 
+
 \ constant Pi 
+
 : Pir^2 
+
 ; 
+
 ( fp,r – )  
 2Dup F* Pi F*  
 Cr 9 F2AE Cr  
