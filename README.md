@@ -164,28 +164,23 @@ Figure 8
 
 Once all the code is loaded, you has a complete Beta Test System. I say Beta with a 
 grain of salt. I have partially tested all new words and have tried a FFT word with CW 
-data from my Ham radio. At this point we have: 
-dir         
-FLASH DRIVE 001 
-File Name     
- Date Changed      
-Hello.dat       
-Total bytes used                               
-Total disk size                             
-Total bytes free                           
+data from my Ham radio. At this point we have:        
+dir                FLASH DRIVE 001 
+        File Name       Date Changed        Size 
+        Hello.dat       09032026              512
+        
+Total bytes used                              512                               
+Total disk size                             128512                                  
+Total bytes free                            128000
+
 ?mem 
 Flash  53597 
-Ram    
- 6395 
+Ram     6395 
 ok 
-09032026              
-Size 
-512 
-512 
-128512 
-128000 
+
 So, there are 53K of flash for Forth words and 6.4K of SRAM for variables This is plenty 
 of room for developing microprocessor programs.  
+
 ADDITIONAL CODE: 
 As part of the development of this 2560eForth I used some utilities to simplify the 
 pointer used in the MFS system. 
@@ -215,6 +210,7 @@ does r> 2* dup i@ context !
 \ create a forget point to chop back to 
 \ -------------------------------------------------------------------------- 
 I am not sure who WFR is, but I give credit for his utilities. 
+
 OBSERVATIONS: 
 The Atmega 2560 board gives the hobbyist more I/O than anyone could want and with a 
 small Forth system it provides an excellent platform for digital project development. I set 
@@ -254,10 +250,12 @@ microcontrollers. Work has been started on documentation of the new Forth words
 added for File access and Floating Point math. 
 Along with this Word document are additional files that I used in the example code in 
 Appendix A. 
-Separate files are:  TestFile7.txt  main.asm 
-    MFSforth3.txt forth source 
-    DataFile.dat  FFT data CW signal 
-    FFT256.txt  FFTforth routine 
+Separate files are:  
+
+    TestFile7.txt    main.asm 
+    MFSforth3.txt    forth source 
+    DataFile.dat     FFT data CW signal 
+    FFT256.txt       FFTforth routine 
  
  
 APPENDIX A: 
@@ -328,13 +326,13 @@ Notice my error where the file name was not entered for the FWRITE Command.
 Check the DIR command to see files loaded. 
 dir         FLASH DRIVE 001 
      File Name      Date Changed      Size 
-     Hello.dat          09032026           512 
+     Hello.dat       09032026            512 
      DataFile.dat    11212026           1024 
-     FFT256.f         11212026           4096 
+     FFT256.f        11212026           4096 
  
-Total bytes used                              5632 
-Total disk size                              128512 
-Total bytes free                            122880 
+Total bytes used                        5632 
+Total disk size                       128512 
+Total bytes free                      122880 
 Ok 
  
  
